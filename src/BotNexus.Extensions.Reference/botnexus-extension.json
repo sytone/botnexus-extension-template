@@ -1,0 +1,10 @@
+{
+  "id": "botnexus-reference",
+  "name": "Reference Tool",
+  "description": "A minimal out-of-tree BotNexus tool extension used as a forkable starting point.",
+  "version": "1.0.0",
+  "entryAssembly": "BotNexus.Extensions.Reference.dll",
+  "extensionTypes": ["tool"],
+  "enabled": true,
+  "configSchema": []
+}

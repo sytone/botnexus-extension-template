@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>BotNexus.Extensions.Reference</RootNamespace>
+    <Description>Reference out-of-tree tool extension for BotNexus.</Description>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <BotNexusRepoRoot Condition="'$(BotNexusRepoRoot)' == '' and '$(BOTNEXUS_REPO_ROOT)' != ''">$(BOTNEXUS_REPO_ROOT)</BotNexusRepoRoot>
+  </PropertyGroup>
+
+  <Target Name="RequireBotNexusRepoRoot" BeforeTargets="ResolveProjectReferences">
+    <Error Condition="'$(BotNexusRepoRoot)' == ''" Text="BotNexusRepoRoot is required. Pass -p:BotNexusRepoRoot=/path/to/botnexus or set BOTNEXUS_REPO_ROOT." />
+    <Error Condition="!Exists('$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj')" Text="BotNexusRepoRoot does not point to a BotNexus checkout: $(BotNexusRepoRoot)" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj" />
+    <ProjectReference Include="$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Providers.Core/BotNexus.Agent.Providers.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="botnexus-extension.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
