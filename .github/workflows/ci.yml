@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out extension
+        uses: actions/checkout@v4
+        with:
+          path: extension
+
+      - name: Check out BotNexus contracts
+        uses: actions/checkout@v4
+        with:
+          repository: sytone/botnexus
+          ref: main
+          path: botnexus
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test extension
+        shell: pwsh
+        run: >-
+          dotnet test extension/tests/BotNexus.Extensions.Reference.Tests/BotNexus.Extensions.Reference.Tests.csproj
+          -c Release
+          -p:BotNexusRepoRoot="${{ github.workspace }}/botnexus"
+          --nologo
