@@ -4,16 +4,28 @@
     <Description>Reference out-of-tree tool extension for BotNexus.</Description>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <BotNexusRepoRoot Condition="'$(BotNexusRepoRoot)' == '' and '$(BOTNEXUS_REPO_ROOT)' != ''">$(BOTNEXUS_REPO_ROOT)</BotNexusRepoRoot>
+    <BotNexusReferenceShape Condition="'$(BotNexusReferenceShape)' == ''">source</BotNexusReferenceShape>
+    <BotNexusBinaryConfiguration Condition="'$(BotNexusBinaryConfiguration)' == ''">Release</BotNexusBinaryConfiguration>
+    <BotNexusAgentCoreAssembly>$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/bin/$(BotNexusBinaryConfiguration)/net10.0/BotNexus.Agent.Core.dll</BotNexusAgentCoreAssembly>
+    <BotNexusProvidersCoreAssembly>$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Providers.Core/bin/$(BotNexusBinaryConfiguration)/net10.0/BotNexus.Agent.Providers.Core.dll</BotNexusProvidersCoreAssembly>
   </PropertyGroup>
 
-  <Target Name="RequireBotNexusRepoRoot" BeforeTargets="ResolveProjectReferences">
+  <Target Name="RequireBotNexusReferences" BeforeTargets="ResolveProjectReferences;ResolveAssemblyReferences">
     <Error Condition="'$(BotNexusRepoRoot)' == ''" Text="BotNexusRepoRoot is required. Pass -p:BotNexusRepoRoot=/path/to/botnexus or set BOTNEXUS_REPO_ROOT." />
-    <Error Condition="!Exists('$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj')" Text="BotNexusRepoRoot does not point to a BotNexus checkout: $(BotNexusRepoRoot)" />
+    <Error Condition="'$(BotNexusReferenceShape)' != 'source' and '$(BotNexusReferenceShape)' != 'binary'" Text="BotNexusReferenceShape must be source or binary, not '$(BotNexusReferenceShape)'." />
+    <Error Condition="'$(BotNexusReferenceShape)' == 'source' and !Exists('$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj')" Text="BotNexusRepoRoot does not point to a BotNexus source checkout: $(BotNexusRepoRoot)" />
+    <Error Condition="'$(BotNexusReferenceShape)' == 'binary' and !Exists('$(BotNexusAgentCoreAssembly)')" Text="Binary reference is missing: $(BotNexusAgentCoreAssembly). Build BotNexus.Agent.Core in $(BotNexusBinaryConfiguration) first." />
+    <Error Condition="'$(BotNexusReferenceShape)' == 'binary' and !Exists('$(BotNexusProvidersCoreAssembly)')" Text="Binary reference is missing: $(BotNexusProvidersCoreAssembly). Build BotNexus.Agent.Providers.Core in $(BotNexusBinaryConfiguration) first." />
   </Target>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(BotNexusReferenceShape)' == 'source'">
     <ProjectReference Include="$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj" />
     <ProjectReference Include="$(BotNexusRepoRoot)/src/agent/BotNexus.Agent.Providers.Core/BotNexus.Agent.Providers.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BotNexusReferenceShape)' == 'binary'">
+    <Reference Include="BotNexus.Agent.Core" HintPath="$(BotNexusAgentCoreAssembly)" Private="true" />
+    <Reference Include="BotNexus.Agent.Providers.Core" HintPath="$(BotNexusProvidersCoreAssembly)" Private="true" />
   </ItemGroup>
 
   <ItemGroup>
