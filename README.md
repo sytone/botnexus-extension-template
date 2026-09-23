@@ -29,7 +29,7 @@ scripts/
 ## Prerequisites
 
 - .NET SDK 10.0.204 or a compatible later 10.0 SDK.
-- A local BotNexus checkout. The extension references BotNexus projects until extension SDK packages are published.
+- A local BotNexus checkout. The extension can reference BotNexus source projects or assemblies built from that checkout until extension SDK packages are published.
 - PowerShell 7 for the complete build/package/install workflow. Bash wrappers are included for build and test.
 
 ## Start a new extension
@@ -70,7 +70,23 @@ export BOTNEXUS_REPO_ROOT="$HOME/src/botnexus"
 
 You can instead pass `-BotNexusRepoRoot` to each PowerShell script. The build fails with the resolved path when it is absent or not a BotNexus checkout.
 
-Pin the BotNexus revision used by your CI and release process. The extension contract is source-based today, so an unpinned moving checkout can introduce breaking changes without changing this repository.
+### Choose a reference shape
+
+The default `BotNexusReferenceShape=source` uses `ProjectReference` entries rooted at `BotNexusRepoRoot`. This gives the fastest authoring feedback and is the shape used by the normal build and test scripts.
+
+Set `BotNexusReferenceShape=binary` when your build pipeline produces the BotNexus contract assemblies first and the extension must compile against those exact outputs:
+
+```powershell
+dotnet build "$env:BOTNEXUS_REPO_ROOT/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj" -c Release
+dotnet build "$env:BOTNEXUS_REPO_ROOT/src/agent/BotNexus.Agent.Providers.Core/BotNexus.Agent.Providers.Core.csproj" -c Release
+dotnet test tests/BotNexus.Extensions.Reference.Tests/BotNexus.Extensions.Reference.Tests.csproj -c Release -p:BotNexusRepoRoot="$env:BOTNEXUS_REPO_ROOT" -p:BotNexusReferenceShape=binary
+```
+
+The binary shape resolves `BotNexus.Agent.Core.dll` and `BotNexus.Agent.Providers.Core.dll` from each project's `bin/<configuration>/net10.0` directory. Override `BotNexusBinaryConfiguration` when the BotNexus assemblies were built with a configuration other than `Release`. Missing assemblies fail with the exact resolved path rather than falling back to another checkout or version.
+
+Keep source references as the default unless your release process already owns the BotNexus build. Do not copy contract DLLs into source control.
+
+Pin the BotNexus revision used by your CI and release process. Both shapes use a local checkout today, so an unpinned moving checkout can introduce breaking changes without changing this repository.
 
 ## Build and test
 
@@ -201,7 +217,7 @@ Before installing an internal extension:
 
 ## Known limitations
 
-- There is no stable published BotNexus extension SDK package yet.
+- There is no stable published BotNexus extension SDK package yet; source and binary references both come from a local BotNexus checkout.
 - The repository-registration CLI does not yet clone/build/deploy registered repositories.
 - Manually deployed external extensions are not protected from current stale-extension pruning.
 - Extension unload leaves service registrations until process restart.

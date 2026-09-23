@@ -33,10 +33,26 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Test extension
+      - name: Test source-reference shape
         shell: pwsh
         run: >-
           dotnet test extension/tests/BotNexus.Extensions.Reference.Tests/BotNexus.Extensions.Reference.Tests.csproj
           -c Release
           -p:BotNexusRepoRoot="${{ github.workspace }}/botnexus"
+          --nologo
+
+      - name: Build BotNexus binary contracts
+        shell: pwsh
+        run: |
+          dotnet build botnexus/src/agent/BotNexus.Agent.Core/BotNexus.Agent.Core.csproj -c Release --nologo
+          dotnet build botnexus/src/agent/BotNexus.Agent.Providers.Core/BotNexus.Agent.Providers.Core.csproj -c Release --nologo
+
+      - name: Test binary-reference shape
+        shell: pwsh
+        run: >-
+          dotnet test extension/tests/BotNexus.Extensions.Reference.Tests/BotNexus.Extensions.Reference.Tests.csproj
+          -c Release
+          -p:BotNexusRepoRoot="${{ github.workspace }}/botnexus"
+          -p:BotNexusReferenceShape=binary
+          -p:BotNexusBinaryConfiguration=Release
           --nologo
